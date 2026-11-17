@@ -1,18 +1,18 @@
 # Token Radar — LAD implied value
 
-A make.fun competition entry that builds a token launch radar: it reads a sealed DefiLlama snapshot, fits a median (least-absolute-deviation) regression in log space over the tokenized comparables, and ranks every pre-token protocol by an implied value with a low/central/high interval. The dark scatter dashboard shows the fitted line and residual band, a sortable board, per-protocol detail views with farm plans, and a Comps view of the evidence base.
+A make.fun competition entry that turns the sealed protocol snapshot into a launch-value radar. It fits a robust median relationship between TVL and market capitalization, scores protocols that record no token, and gives each one an actionable farm path.
 
 [![Competition](https://make.fun/badge/token-radar-01.svg)](https://make.fun/competitions/token-radar-01)
 [![Rank](https://make.fun/badge/token-radar-01/Plowester1/token-radar-01-v3/rank.svg)](https://make.fun/competitions/token-radar-01)
 [![Reward](https://make.fun/badge/token-radar-01/Plowester1/token-radar-01-v3/reward.svg)](https://make.fun/competitions/token-radar-01)
 
-## What it does
+## Approach
 
-- Fits `log(mcap) = intercept + slope·log(TVL) + category offset` by **LAD (IRLS)** on 128 tokenized comparables at runtime — one 400x outlier cannot drag the line the way OLS lets it.
-- Ranks 300 pre-token protocols by implied value, each with a low / central / high interval from the fitted residual quantiles.
-- Separates protocols whose token already trades into a dedicated **Comps view** (the model's evidence base); board rows are pre-token only.
-- Gives every row a 5-step, category-specific farm plan (onboard, deploy capital by TVL tier, recurring qualifying action, monitor/compound, exit/claim).
-- Is fully deterministic: two runs write byte-identical output, including the dossier the judge reads.
+- Fit `log(mcap) = intercept + slope·log(TVL) + category offset` with **least absolute deviations** at runtime. IRLS starts from OLS, then repeatedly solves weighted normal equations with weights `1/max(|residual|, 1e-3)` until the coefficients stabilize.
+- Rank 300 pre-token, non-CEX protocols by implied value. Residual quartiles supply a low/central/high interval, while bounded growth and maturity priors adjust the central estimate without pretending to be fitted coefficients.
+- Keep all 128 already-trading protocols in a separate **Comps** view. They are the model’s evidence base and never become board rows.
+- Attach five concrete farm steps to every row, with capital sized from protocol TVL and a qualifying-action window from protocol age.
+- Render a dark, framework-free dashboard with a log-log scatter, sortable filters, deep-linked protocol details, and the comparable set.
 
 ## Run
 
@@ -21,14 +21,14 @@ mkdir -p out
 MAKEFUN_OUTPUT_DIR=out node main.ts --input /home/hatch/workspace/makefun/kits/token-radar-01-kit/input/snapshot.json
 ```
 
-The program writes `out/board.json`, `out/data.js`, `out/dashboard/`, `out/screenshots/`, and `out/dossier.json`. Node 22.18 or later, standard library only.
+The run writes `out/board.json`, `out/data.js`, `out/dashboard/`, `out/screenshots/`, and `out/dossier.json`. It needs Node 22.18 or newer and uses only the standard library.
 
-## Files
+## Repository map
 
-- `main.ts` — entrypoint: reads the snapshot, fits, scores, writes output and the dossier.
-- `lib/model.ts` — snapshot parsing, LAD fit via IRLS, residual quantiles, backtest, board build, farm plans, comps data.
-- `vendor/makefun-board.ts` — the dossier builder (schema `makefun/dossier/v1`).
-- `dashboard/` — the dark scatter dashboard (no network).
-- `screenshots/` — three 1440×900 renders of the dashboard.
+- `main.ts` — reads the snapshot, fits the model, validates the board, and writes the output bundle.
+- `lib/model.ts` — snapshot parsing, LAD fitting, scoring, residual statistics, board construction, and farm plans.
+- `vendor/makefun-board.ts` — canonical dashboard-dossier builder.
+- `dashboard/` — static near-black radar with an amber accent and no network access.
+- `screenshots/` — fresh 1440×900 renders of the board, rank-one detail, and Comps views.
 
-Built with [make.fun](https://make.fun/?ref=xt604nns&utm_source=github&utm_medium=readme&utm_campaign=token-radar-01).
+Built for [make.fun](https://make.fun/?ref=xt604nns&utm_source=github&utm_medium=readme&utm_campaign=token-radar-01).
